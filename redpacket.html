@@ -9,28 +9,32 @@
     background: linear-gradient(180deg, #b30000, #7a0000);
     margin: 0;
     height: 100vh;
+    overflow: hidden;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    color: #fff;
     font-family: "Microsoft YaHei", sans-serif;
+    color: #fff;
   }
+
   .envelope {
     width: 240px;
     height: 320px;
     background: #d40000;
     border-radius: 12px;
-    box-shadow: 0 0 20px rgba(0,0,0,0.3);
+    box-shadow: 0 0 30px rgba(0,0,0,0.5);
     position: relative;
     overflow: hidden;
   }
+
   .top {
     height: 60%;
     background: #b00000;
     border-bottom-left-radius: 50%;
     border-bottom-right-radius: 50%;
   }
+
   .circle {
     position: absolute;
     bottom: 60px;
@@ -46,16 +50,64 @@
     color: red;
     font-size: 28px;
     font-weight: bold;
-    box-shadow: 0 0 15px rgba(255,215,0,0.8);
+    box-shadow: 0 0 20px rgba(255,215,0,0.9);
     cursor: pointer;
-    transition: transform 0.2s;
+    transition: transform 0.2s, box-shadow 0.3s;
   }
+
   .circle:active {
     transform: translateX(-50%) scale(0.9);
+    box-shadow: 0 0 30px rgba(255,215,0,1);
   }
+
   .msg {
     margin-top: 20px;
-    font-size: 16px;
+    font-size: 18px;
+    text-align: center;
+    min-height: 24px;
+    transition: transform 0.3s;
+  }
+
+  /* 红包雨/金币效果 */
+  .red-packet, .gold-coin {
+    position: absolute;
+    width: 40px;
+    height: 40px;
+    pointer-events: none;
+    animation: fall linear forwards;
+  }
+
+  .red-packet {
+    background: radial-gradient(circle, #ffec00 0%, #ff4d4d 100%);
+    border-radius: 50%;
+  }
+
+  .gold-coin {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 30% 30%, #fff500, #ffb600);
+    box-shadow: 0 0 6px gold;
+  }
+
+  @keyframes fall {
+    0% { transform: translateY(-50px) rotate(0deg); opacity: 1; }
+    100% { transform: translateY(120vh) rotate(360deg); opacity: 0; }
+  }
+
+  /* 点数飞出动画 */
+  .score-fly {
+    position: absolute;
+    font-size: 24px;
+    font-weight: bold;
+    color: gold;
+    text-shadow: 0 0 5px #fff, 0 0 10px #ff0;
+    animation: flyUp 1s forwards;
+  }
+
+  @keyframes flyUp {
+    0% { transform: translateY(0); opacity: 1; }
+    100% { transform: translateY(-120px) scale(1.2); opacity: 0; }
   }
 </style>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
@@ -70,21 +122,74 @@
   <script>
     const tg = window.Telegram.WebApp;
     tg.expand(); // 全屏显示 WebApp
+
     const urlParams = new URLSearchParams(window.location.search);
-    const gid = urlParams.get("gid");
     const uid = urlParams.get("uid");
     const game = urlParams.get("game");
 
+    let grabbed = false; // 每个 URL 只能点击一次
+
+    function createRedPacket() {
+      const rp = document.createElement("div");
+      rp.className = "red-packet";
+      rp.style.left = Math.random() * window.innerWidth + "px";
+      rp.style.animationDuration = 2 + Math.random() * 2 + "s";
+      document.body.appendChild(rp);
+      setTimeout(() => rp.remove(), 4000);
+    }
+
+    function createGoldCoin() {
+      const coin = document.createElement("div");
+      coin.className = "gold-coin";
+      coin.style.left = Math.random() * window.innerWidth + "px";
+      coin.style.animationDuration = 1.5 + Math.random() * 1.5 + "s";
+      document.body.appendChild(coin);
+      setTimeout(() => coin.remove(), 3000);
+    }
+
+    function startRedPacketRain(count = 40) {
+      let i = 0;
+      const interval = setInterval(() => {
+        createRedPacket();
+        createGoldCoin();
+        i++;
+        if(i >= count) clearInterval(interval);
+      }, 80);
+    }
+
+    function showScoreFly(display) {
+      const score = document.createElement("div");
+      score.className = "score-fly";
+      score.innerText = `🎉 ${display} 🎉`;
+      document.body.appendChild(score);
+      score.style.left = (window.innerWidth / 2 - 50 + Math.random()*20 - 10) + "px";
+      score.style.top = (window.innerHeight / 2 - 50 + Math.random()*20 - 10) + "px";
+      setTimeout(() => score.remove(), 1000);
+    }
+
     document.getElementById("grabBtn").addEventListener("click", () => {
+      if (grabbed) {
+        alert("你已经领取过这个红包啦！");
+        return;
+      }
+      grabbed = true;
+
       // 模拟生成点数
       const num = Math.floor(Math.random() * 1000);
       const display = `${String(num).padStart(3, "0")[0]}.${String(num).padStart(3, "0").slice(1)}`;
       const mult = Math.min(9, Math.ceil(num / 111));
 
-      tg.sendData(JSON.stringify({ gid, uid, game, num, display, mult }));
+      // 发送数据给 bot
+      tg.sendData(JSON.stringify({ uid, game, num, display, mult }));
+
+      // UI动画
       document.querySelector(".msg").innerText = `🎉 你抢到了 ${display} (${mult}倍)！`;
       document.getElementById("grabBtn").style.display = "none";
-      setTimeout(() => tg.close(), 2000);
+      startRedPacketRain(50);
+      showScoreFly(display);
+
+      // 自动关闭 WebApp
+      setTimeout(() => tg.close(), 3000);
     });
   </script>
 </body>

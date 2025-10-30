@@ -167,6 +167,36 @@
       setTimeout(() => score.remove(), 1000);
     }
 
+    async function verifyAccess() {
+        const tg = window.Telegram.WebApp;
+        tg.expand();
+
+      const params = new URLSearchParams(window.location.search);
+      const gid = params.get("gid");
+      const game = params.get("game");
+      const uid = tg.initDataUnsafe.user?.id;
+
+      if (!uid) {
+        document.body.innerHTML = "<h2>❌ 无法识别你的 Telegram 用户，请在群内点开红包</h2>";
+        return;
+      }
+
+      const res = await fetch(`https://你的服务器域名/verify?gid=${gid}&game=${game}&uid=${uid}`);
+      const data = await res.json();
+
+      if (!data.ok) {
+        document.body.innerHTML = `<h2>🚫 ${data.reason || "你没有下注，不能抢红包"}</h2>`;
+        return;
+      }
+
+      if (data.alreadyGrabbed) {
+        document.body.innerHTML = `<h2>🧧 恭喜发财！你已抢过红包<br>点数：${data.points}</h2>`;
+        return;
+      }
+    }
+    verifyAccess();
+
+
     document.getElementById("grabBtn").addEventListener("click", () => {
       if (grabbed) {
         alert("你已经领取过这个红包啦！");

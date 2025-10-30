@@ -181,8 +181,8 @@
         return;
       }
 
-      const res = await fetch(`https://你的服务器域名/verify?gid=${gid}&game=${game}&uid=${uid}`);
-      const data = await res.json();
+      const apiBase = "https://bao-api.wtf/redpacket.html"
+      await fetch(`${apiBase}/grab?gid=${gid}&game=${game}&uid=${uid}`);
 
       if (!data.ok) {
         document.body.innerHTML = `<h2>🚫 ${data.reason || "你没有下注，不能抢红包"}</h2>`;

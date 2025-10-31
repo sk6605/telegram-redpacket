@@ -68,13 +68,16 @@
     const gid = params.get("gid");
     const game = params.get("game");
 
-    const user = tg.initDataUnsafe.user;
+    let user = tg.initDataUnsafe?.user;
     const grabBtn = document.getElementById("grabBtn");
     const msg = document.getElementById("msg");
 
     if (!user) {
-      document.body.innerHTML = "<h2>❌ 无法识别你的 Telegram 用户，请在群内点开红包按钮</h2>";
-      throw new Error("No Telegram user");
+      const uidFromUrl = params.get("uid");
+      const nameFromUrl = params.get("name");
+      if (uidFromUrl) {
+         user = { id: uidFromUrl, username: nameFromUrl || "游客模式" };
+      }
     }
 
     const uid = user.id;

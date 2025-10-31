@@ -17,94 +17,35 @@
     font-family: "Microsoft YaHei", sans-serif;
     color: #fff;
   }
-
-  .envelope {
-    width: 240px;
-    height: 320px;
-    background: #d40000;
-    border-radius: 12px;
-    box-shadow: 0 0 30px rgba(0,0,0,0.5);
-    position: relative;
-    overflow: hidden;
-  }
-
-  .top {
-    height: 60%;
-    background: #b00000;
-    border-bottom-left-radius: 50%;
-    border-bottom-right-radius: 50%;
-  }
-
+  .envelope { width: 240px; height: 320px; background: #d40000; border-radius: 12px;
+    box-shadow: 0 0 30px rgba(0,0,0,0.5); position: relative; overflow: hidden; }
+  .top { height: 60%; background: #b00000; border-bottom-left-radius: 50%; border-bottom-right-radius: 50%; }
   .circle {
-    position: absolute;
-    bottom: 60px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 100px;
-    height: 100px;
-    background: gold;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: red;
-    font-size: 28px;
-    font-weight: bold;
-    box-shadow: 0 0 20px rgba(255,215,0,0.9);
-    cursor: pointer;
+    position: absolute; bottom: 60px; left: 50%; transform: translateX(-50%);
+    width: 100px; height: 100px; background: gold; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    color: red; font-size: 28px; font-weight: bold;
+    box-shadow: 0 0 20px rgba(255,215,0,0.9); cursor: pointer;
     transition: transform 0.2s, box-shadow 0.3s;
   }
-
-  .circle:active {
-    transform: translateX(-50%) scale(0.9);
-    box-shadow: 0 0 30px rgba(255,215,0,1);
-  }
-
-  .msg {
-    margin-top: 20px;
-    font-size: 18px;
-    text-align: center;
-    min-height: 24px;
-    transition: transform 0.3s;
-  }
-
-  /* 红包雨/金币效果 */
+  .circle:active { transform: translateX(-50%) scale(0.9); box-shadow: 0 0 30px rgba(255,215,0,1); }
+  .msg { margin-top: 20px; font-size: 18px; text-align: center; min-height: 24px; }
   .red-packet, .gold-coin {
-    position: absolute;
-    width: 40px;
-    height: 40px;
-    pointer-events: none;
-    animation: fall linear forwards;
+    position: absolute; width: 40px; height: 40px; pointer-events: none; animation: fall linear forwards;
   }
-
-  .red-packet {
-    background: radial-gradient(circle, #ffec00 0%, #ff4d4d 100%);
-    border-radius: 50%;
-  }
-
+  .red-packet { background: radial-gradient(circle, #ffec00 0%, #ff4d4d 100%); border-radius: 50%; }
   .gold-coin {
-    width: 24px;
-    height: 24px;
-    border-radius: 50%;
-    background: radial-gradient(circle at 30% 30%, #fff500, #ffb600);
-    box-shadow: 0 0 6px gold;
+    width: 24px; height: 24px; border-radius: 50%;
+    background: radial-gradient(circle at 30% 30%, #fff500, #ffb600); box-shadow: 0 0 6px gold;
   }
-
   @keyframes fall {
     0% { transform: translateY(-50px) rotate(0deg); opacity: 1; }
     100% { transform: translateY(120vh) rotate(360deg); opacity: 0; }
   }
-
-  /* 点数飞出动画 */
   .score-fly {
-    position: absolute;
-    font-size: 24px;
-    font-weight: bold;
-    color: gold;
-    text-shadow: 0 0 5px #fff, 0 0 10px #ff0;
-    animation: flyUp 1s forwards;
+    position: absolute; font-size: 24px; font-weight: bold; color: gold;
+    text-shadow: 0 0 5px #fff, 0 0 10px #ff0; animation: flyUp 1s forwards;
   }
-
   @keyframes flyUp {
     0% { transform: translateY(0); opacity: 1; }
     100% { transform: translateY(-120px) scale(1.2); opacity: 0; }
@@ -117,17 +58,59 @@
     <div class="top"></div>
     <div class="circle" id="grabBtn">抢</div>
   </div>
-  <div class="msg">点击“抢”看看你的手气吧！</div>
+  <div class="msg" id="msg">点击“抢”看看你的手气吧！</div>
 
   <script>
     const tg = window.Telegram.WebApp;
-    tg.expand(); // 全屏显示 WebApp
+    tg.expand();
 
-    const urlParams = new URLSearchParams(window.location.search);
-    const uid = urlParams.get("uid");
-    const game = urlParams.get("game");
+    const params = new URLSearchParams(window.location.search);
+    const gid = params.get("gid");
+    const game = params.get("game");
 
-    let grabbed = false; // 每个 URL 只能点击一次
+    const user = tg.initDataUnsafe.user;
+    const grabBtn = document.getElementById("grabBtn");
+    const msg = document.getElementById("msg");
+
+    if (!user) {
+      document.body.innerHTML = "<h2>❌ 无法识别你的 Telegram 用户，请在群内点开红包按钮</h2>";
+      throw new Error("No Telegram user");
+    }
+
+    const uid = user.id;
+    const username = user.username || user.first_name || "匿名";
+
+    let canGrab = false;
+    let grabbed = false;
+
+    // 🌐 核心修改 🔧：调用正确的后端接口
+    async function verifyAccess() {
+      try {
+        const res = await fetch(`https://bao-api.wtf/grab?gid=${gid}&game=${game}&uid=${uid}`);
+        const data = await res.json();
+
+        if (!data.ok) {
+          msg.innerHTML = `🚫 ${data.reason || "你没有下注，不能抢红包"}`;
+          grabBtn.style.display = "none";
+          return;
+        }
+
+        if (data.alreadyGrabbed) {
+          msg.innerHTML = `🧧 ${username}，你已经抢过红包<br>获得：${data.points} 点`;
+          grabBtn.style.display = "none";
+          return;
+        }
+
+        canGrab = true;
+        msg.innerText = "红包在你面前，点下去吧！💥";
+
+      } catch (err) {
+        msg.innerText = "❌ 网络错误，请稍后再试";
+        grabBtn.style.display = "none";
+      }
+    }
+
+    verifyAccess();
 
     function createRedPacket() {
       const rp = document.createElement("div");
@@ -153,7 +136,7 @@
         createRedPacket();
         createGoldCoin();
         i++;
-        if(i >= count) clearInterval(interval);
+        if (i >= count) clearInterval(interval);
       }, 80);
     }
 
@@ -162,63 +145,32 @@
       score.className = "score-fly";
       score.innerText = `🎉 ${display} 🎉`;
       document.body.appendChild(score);
-      score.style.left = (window.innerWidth / 2 - 50 + Math.random()*20 - 10) + "px";
-      score.style.top = (window.innerHeight / 2 - 50 + Math.random()*20 - 10) + "px";
+      score.style.left = (window.innerWidth / 2 - 50) + "px";
+      score.style.top = (window.innerHeight / 2 - 50) + "px";
       setTimeout(() => score.remove(), 1000);
     }
 
-    async function verifyAccess() {
-        const tg = window.Telegram.WebApp;
-        tg.expand();
+    grabBtn.addEventListener("click", async () => {
+      if (!canGrab) return alert("❗ 你没有抢红包资格");
+      if (grabbed) return alert("你已经抢过啦！");
 
-      const params = new URLSearchParams(window.location.search);
-      const gid = params.get("gid");
-      const game = params.get("game");
-      const uid = tg.initDataUnsafe.user?.id;
+      grabbed = true;
+      grabBtn.style.display = "none";
 
-      if (!uid) {
-        document.body.innerHTML = "<h2>❌ 无法识别你的 Telegram 用户，请在群内点开红包</h2>";
-        return;
-      }
-
-      const apiBase = "https://bao-api.wtf/redpacket.html"
-      await fetch(`${apiBase}/grab?gid=${gid}&game=${game}&uid=${uid}`);
+      const res = await fetch(`https://bao-api.wtf/grab?gid=${gid}&game=${game}&uid=${uid}`, { method: "POST" });
+      const data = await res.json();
 
       if (!data.ok) {
-        document.body.innerHTML = `<h2>🚫 ${data.reason || "你没有下注，不能抢红包"}</h2>`;
+        msg.innerHTML = `🚫 ${data.reason || "抢红包失败"}`;
         return;
       }
 
-      if (data.alreadyGrabbed) {
-        document.body.innerHTML = `<h2>🧧 恭喜发财！你已抢过红包<br>点数：${data.points}</h2>`;
-        return;
-      }
-    }
-    verifyAccess();
+      const points = data.points;
+      msg.innerHTML = `🎉 ${username} 抢到 ${points} 点！`;
+      startRedPacketRain(60);
+      showScoreFly(points);
 
-
-    document.getElementById("grabBtn").addEventListener("click", () => {
-      if (grabbed) {
-        alert("你已经领取过这个红包啦！");
-        return;
-      }
-      grabbed = true;
-
-      // 模拟生成点数
-      const num = Math.floor(Math.random() * 1000);
-      const display = `${String(num).padStart(3, "0")[0]}.${String(num).padStart(3, "0").slice(1)}`;
-      const mult = Math.min(9, Math.ceil(num / 111));
-
-      // 发送数据给 bot
-      tg.sendData(JSON.stringify({ uid, game, num, display, mult }));
-
-      // UI动画
-      document.querySelector(".msg").innerText = `🎉 你抢到了 ${display} (${mult}倍)！`;
-      document.getElementById("grabBtn").style.display = "none";
-      startRedPacketRain(50);
-      showScoreFly(display);
-
-      // 自动关闭 WebApp
+      tg.sendData(JSON.stringify({ uid, points, game }));
       setTimeout(() => tg.close(), 3000);
     });
   </script>

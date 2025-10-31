@@ -92,7 +92,7 @@
     // 🌐 核心修改 🔧：调用正确的后端接口
     async function verifyAccess() {
       try {
-        const res = await fetch(`https://bao.wtf/grab?gid=${gid}&game=${game}&uid=${uid}`);
+        const res = await fetch(`http://192.168.0.184:3000/grab?gid=${gid}&game=${game}&uid=${uid}`);
         const data = await res.json();
 
         if (!data.ok) {

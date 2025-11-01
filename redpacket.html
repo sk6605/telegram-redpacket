@@ -124,7 +124,7 @@
       const text = await res.text();   // 👈 先拿原始文本
       console.log("💡 Raw fetch response:", text);
   
-      const data = JSON.parse(text);   // 👈 手动解析 JSON
+      const data = JSON.parse(text);
       console.log("💡 Parsed JSON:", data);
 
       if (!data.ok) {
@@ -133,7 +133,7 @@
         return;
       }
 
-      const points = Number(data.amount ?? 0);
+      const points = Number(data.points ?? 0);
       msg.innerHTML = `🎉 ${username} 抢到了 <b>${points}</b> 点！`;
       startRedPacketRain(60);
       showScoreFly(points);

@@ -23,7 +23,7 @@
   <div class="msg" id="msg">点击“抢”看看你的手气吧！</div>
 
 <script>
-const API_BASE = "https://your-domain-or-ngrok"; // <- 改成你的后端地址 (例 https://roseanna-loamless-adolfo.ngrok-free.dev 或 https://bao.wtf)
+const API_BASE = "https://bao.wtf/redpacket.html"; // <- 改成你后端的 HTTPS 地址
 const tg = window.Telegram?.WebApp;
 tg?.expand();
 
@@ -62,12 +62,8 @@ grabBtn.addEventListener("click", async () => {
       method: "POST"
     });
 
-    const text = await res.text();
-    console.log("Raw response:", text);
-    let data;
-    try { data = JSON.parse(text); } catch(e){ msg.innerText = "返回非 JSON 内容"; grabBtn.style.display = "block"; return; }
-
-    console.log("Parsed:", data);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
 
     if (!data.ok) {
       msg.innerHTML = `🚫 ${data.reason || "抢红包失败"}`;
@@ -80,11 +76,12 @@ grabBtn.addEventListener("click", async () => {
     showScoreFly(points);
 
     // 发送到 Telegram container（如果是通过 WebApp 打开）
-    try { tg?.sendData(JSON.stringify({ uid, username, points, game_id })); } catch(e) { /* ignore */ }
+    try { tg?.sendData(JSON.stringify({ uid, username, points, game_id })); } catch(e) { console.warn(e); }
+
     setTimeout(()=>tg?.close?.(), 2000);
   } catch (err) {
     console.error("fetch error", err);
-    msg.innerText = "❌ 网络错误，请稍后再试";
+    msg.innerText = `❌ 网络错误或服务器不可访问：${err.message}`;
     grabBtn.style.display = "block";
   }
 });

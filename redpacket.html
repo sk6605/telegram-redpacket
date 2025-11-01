@@ -1,54 +1,17 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>抢红包</title>
 <style>
-  body {
-    background: linear-gradient(180deg, #b30000, #7a0000);
-    margin: 0;
-    height: 100vh;
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    font-family: "Microsoft YaHei", sans-serif;
-    color: #fff;
-  }
-  .envelope {
-    width: 240px; height: 320px; background: #d40000; border-radius: 12px;
-    box-shadow: 0 0 30px rgba(0,0,0,0.5); position: relative; overflow: hidden;
-  }
-  .top { height: 60%; background: #b00000; border-bottom-left-radius: 50%; border-bottom-right-radius: 50%; }
-  .circle {
-    position: absolute; bottom: 60px; left: 50%; transform: translateX(-50%);
-    width: 100px; height: 100px; background: gold; border-radius: 50%;
-    display: flex; align-items: center; justify-content: center;
-    color: red; font-size: 28px; font-weight: bold;
-    box-shadow: 0 0 20px rgba(255,215,0,0.9); cursor: pointer;
-    transition: transform 0.2s, box-shadow 0.3s;
-  }
-  .circle:active { transform: translateX(-50%) scale(0.9); box-shadow: 0 0 30px rgba(255,215,0,1); }
-  .msg { margin-top: 20px; font-size: 18px; text-align: center; min-height: 24px; }
-  .red-packet, .gold-coin {
-    position: absolute; pointer-events: none; animation: fall linear forwards;
-  }
-  .red-packet { width: 40px; height: 40px; background: radial-gradient(circle, #ffec00 0%, #ff4d4d 100%); border-radius: 50%; }
-  .gold-coin { width: 24px; height: 24px; border-radius: 50%; background: radial-gradient(circle at 30% 30%, #fff500, #ffb600); box-shadow: 0 0 6px gold; }
-  @keyframes fall {
-    0% { transform: translateY(-50px) rotate(0deg); opacity: 1; }
-    100% { transform: translateY(120vh) rotate(360deg); opacity: 0; }
-  }
-  .score-fly {
-    position: absolute; font-size: 24px; font-weight: bold; color: gold;
-    text-shadow: 0 0 5px #fff, 0 0 10px #ff0; animation: flyUp 1s forwards;
-  }
-  @keyframes flyUp {
-    0% { transform: translateY(0); opacity: 1; }
-    100% { transform: translateY(-120px) scale(1.2); opacity: 0; }
-  }
+  body{background:linear-gradient(180deg,#b30000,#7a0000);margin:0;height:100vh;display:flex;align-items:center;justify-content:center;font-family:"Microsoft YaHei",sans-serif;color:#fff}
+  .envelope{width:240px;height:320px;background:#d40000;border-radius:12px;position:relative;box-shadow:0 0 30px rgba(0,0,0,.5)}
+  .top{height:60%;background:#b00000;border-bottom-left-radius:50%;border-bottom-right-radius:50%}
+  .circle{position:absolute;bottom:60px;left:50%;transform:translateX(-50%);width:100px;height:100px;background:gold;border-radius:50%;display:flex;align-items:center;justify-content:center;color:red;font-size:28px;font-weight:bold;cursor:pointer}
+  .msg{margin-top:20px;font-size:18px;text-align:center;min-height:24px}
+  .score-fly{position:absolute;font-size:24px;font-weight:bold;color:gold;text-shadow:0 0 5px #fff,0 0 10px #ff0;animation:flyUp 1s forwards}
+  @keyframes flyUp{0%{transform:translateY(0);opacity:1}100%{transform:translateY(-120px) scale(1.2);opacity:0}}
 </style>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 </head>
@@ -59,93 +22,72 @@
   </div>
   <div class="msg" id="msg">点击“抢”看看你的手气吧！</div>
 
-  <script>
-  const API_BASE = "https://roseanna-loamless-adolfo.ngrok-free.dev"; // ✅ 你的后端地址
+<script>
+const API_BASE = "https://your-domain-or-ngrok"; // <- 改成你的后端地址 (例 https://roseanna-loamless-adolfo.ngrok-free.dev 或 https://bao.wtf)
+const tg = window.Telegram?.WebApp;
+tg?.expand();
 
-  const tg = window.Telegram?.WebApp;
-  tg?.expand();
+const params = new URLSearchParams(window.location.search);
+const gid = params.get("gid");
+const game_id = params.get("game_id");
 
-  const params = new URLSearchParams(window.location.search);
-  const gid = params.get("gid");
-  const game = params.get("game");
+const uid = (tg?.initDataUnsafe?.user?.id && String(tg.initDataUnsafe.user.id)) || ("guest_" + Math.random().toString(36).slice(2,10));
+const username = tg?.initDataUnsafe?.user?.username || `游客${Math.floor(Math.random()*1000)}`;
 
-  const uid = "guest_" + Math.random().toString(36).slice(2, 10);
-  const username = tg?.initDataUnsafe?.user?.username || `游客${Math.floor(Math.random() * 1000)}`;
+const grabBtn = document.getElementById("grabBtn");
+const msg = document.getElementById("msg");
 
-  const grabBtn = document.getElementById("grabBtn");
-  const msg = document.getElementById("msg");
+function showScoreFly(display){
+  const el = document.createElement("div");
+  el.className = "score-fly";
+  el.innerText = `🎉 ${display} 🎉`;
+  document.body.appendChild(el);
+  el.style.left = (window.innerWidth/2 - 50) + "px";
+  el.style.top = (window.innerHeight/2 - 50) + "px";
+  setTimeout(()=>el.remove(),1000);
+}
 
-  function createRedPacket() {
-    const rp = document.createElement("div");
-    rp.className = "red-packet";
-    rp.style.left = Math.random() * window.innerWidth + "px";
-    rp.style.animationDuration = 2 + Math.random() * 2 + "s";
-    document.body.appendChild(rp);
-    setTimeout(() => rp.remove(), 4000);
+grabBtn.addEventListener("click", async () => {
+  grabBtn.style.display = "none";
+  msg.innerText = "正在连接服务器...";
+
+  if (!gid || !game_id) {
+    msg.innerHTML = "🚫 参数缺失（gid 或 game_id），请从群里打开链接。";
+    grabBtn.style.display = "block";
+    return;
   }
 
-  function createGoldCoin() {
-    const coin = document.createElement("div");
-    coin.className = "gold-coin";
-    coin.style.left = Math.random() * window.innerWidth + "px";
-    coin.style.animationDuration = 1.5 + Math.random() * 1.5 + "s";
-    document.body.appendChild(coin);
-    setTimeout(() => coin.remove(), 3000);
-  }
+  try {
+    const res = await fetch(`${API_BASE}/grab?gid=${encodeURIComponent(gid)}&game_id=${encodeURIComponent(game_id)}&uid=${encodeURIComponent(uid)}`, {
+      method: "POST"
+    });
 
-  function startRedPacketRain(count = 40) {
-    let i = 0;
-    const interval = setInterval(() => {
-      createRedPacket();
-      createGoldCoin();
-      i++;
-      if (i >= count) clearInterval(interval);
-    }, 80);
-  }
+    const text = await res.text();
+    console.log("Raw response:", text);
+    let data;
+    try { data = JSON.parse(text); } catch(e){ msg.innerText = "返回非 JSON 内容"; grabBtn.style.display = "block"; return; }
 
-  function showScoreFly(display) {
-    const score = document.createElement("div");
-    score.className = "score-fly";
-    score.innerText = `🎉 ${display} 🎉`;
-    document.body.appendChild(score);
-    score.style.left = (window.innerWidth / 2 - 50) + "px";
-    score.style.top = (window.innerHeight / 2 - 50) + "px";
-    setTimeout(() => score.remove(), 1000);
-  }
+    console.log("Parsed:", data);
 
-  grabBtn.addEventListener("click", async () => {
-    grabBtn.style.display = "none";
-    msg.innerText = "正在连接服务器...";
-
-    try {
-      const res = await fetch(`${API_BASE}/grab?gid=${gid}&game=${game}&uid=${uid}`, {
-        method: "POST"
-      });
-      const text = await res.text();   // 👈 先拿原始文本
-      console.log("💡 Raw fetch response:", text);
-  
-      const data = JSON.parse(text);
-      console.log("💡 Parsed JSON:", data);
-
-      if (!data.ok) {
-        msg.innerHTML = `🚫 ${data.reason || "抢红包失败"}`;
-        grabBtn.style.display = "block";
-        return;
-      }
-
-      const points = Number(data.points ?? 0);
-      msg.innerHTML = `🎉 ${username} 抢到了 <b>${points}</b> 点！`;
-      startRedPacketRain(60);
-      showScoreFly(points);
-
-      tg?.sendData(JSON.stringify({ uid, username, points, game }));
-      setTimeout(() => tg?.close(), 3000);
-    } catch (err) {
-      console.error("fetch error", err);
-      msg.innerText = "❌ 网络错误，请稍后再试";
+    if (!data.ok) {
+      msg.innerHTML = `🚫 ${data.reason || "抢红包失败"}`;
       grabBtn.style.display = "block";
+      return;
     }
-  });
+
+    const points = Number(data.points ?? 0);
+    msg.innerHTML = `🎉 ${username} 抢到了 <b>${points}</b> 点！`;
+    showScoreFly(points);
+
+    // 发送到 Telegram container（如果是通过 WebApp 打开）
+    try { tg?.sendData(JSON.stringify({ uid, username, points, game_id })); } catch(e) { /* ignore */ }
+    setTimeout(()=>tg?.close?.(), 2000);
+  } catch (err) {
+    console.error("fetch error", err);
+    msg.innerText = "❌ 网络错误，请稍后再试";
+    grabBtn.style.display = "block";
+  }
+});
 </script>
 </body>
 </html>

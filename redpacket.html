@@ -121,8 +121,11 @@
       const res = await fetch(`${API_BASE}/grab?gid=${gid}&game=${game}&uid=${uid}`, {
         method: "POST"
       });
-      const data = await res.json();
-      console.log("🎯 Grab response:", data);
+      const text = await res.text();   // 👈 先拿原始文本
+      console.log("💡 Raw fetch response:", text);
+  
+      const data = JSON.parse(text);   // 👈 手动解析 JSON
+      console.log("💡 Parsed JSON:", data);
 
       if (!data.ok) {
         msg.innerHTML = `🚫 ${data.reason || "抢红包失败"}`;

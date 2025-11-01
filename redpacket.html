@@ -60,6 +60,8 @@
   <div class="msg" id="msg">点击“抢”看看你的手气吧！</div>
 
   <script>
+    const API_BASE = "https://roseanna-loamless-adolfo.ngrok-free.dev"; // ✅ 改这里就能换服务器地址
+
     const tg = window.Telegram.WebApp;
     tg.expand();
 
@@ -117,7 +119,7 @@
       msg.innerText = "正在连接服务器...";
 
       try {
-        const res = await fetch(`https://bao-api.wtf/grab?gid=${gid}&game=${game}&uid=${uid}`, {
+        const res = await fetch(`${API_BASE}/grab?gid=${gid}&game=${game}&uid=${uid}`, {
           method: "POST",
         });
         const data = await res.json();

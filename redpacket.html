@@ -60,7 +60,7 @@
   <div class="msg" id="msg">点击“抢”看看你的手气吧！</div>
 
   <script>
-    const API_BASE = "https://roseanna-loamless-adolfo.ngrok-free.dev"; // ✅ 改这里就能换服务器地址
+    const API_BASE = "https://roseanna-loamless-adolfo.ngrok-free.dev"; // ✅ 你的后端地址
 
     const tg = window.Telegram.WebApp;
     tg.expand();
@@ -69,7 +69,6 @@
     const gid = params.get("gid");
     const game = params.get("game");
 
-    // 👤 永远生成一个本地访客身份（不依赖 Telegram）
     const uid = "guest_" + Math.random().toString(36).slice(2, 10);
     const username = "游客" + Math.floor(Math.random() * 1000);
 
@@ -119,13 +118,14 @@
       msg.innerText = "正在连接服务器...";
 
       try {
-await fetch(`${API_BASE}/grab?gid=${gid}&game=${game}&uid=${uid}`, {
-  method: "POST"
-});
+        const res = await fetch(`${API_BASE}/grab?gid=${gid}&game=${game}&uid=${uid}`, {
+          method: "POST"
+        });
         const data = await res.json();
 
         if (!data.ok) {
           msg.innerHTML = `🚫 ${data.reason || "抢红包失败"}`;
+          grabBtn.style.display = "block";
           return;
         }
 
@@ -133,8 +133,8 @@ await fetch(`${API_BASE}/grab?gid=${gid}&game=${game}&uid=${uid}`, {
         msg.innerHTML = `🎉 ${username} 抢到 ${points} 点！`;
         startRedPacketRain(60);
         showScoreFly(points);
-        tg.sendData(JSON.stringify({ uid, username, points, game }));
 
+        tg.sendData(JSON.stringify({ uid, username, points, game }));
         setTimeout(() => tg.close(), 3000);
       } catch (err) {
         msg.innerText = "❌ 网络错误，请稍后再试";

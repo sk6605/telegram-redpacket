@@ -129,8 +129,8 @@
           return;
         }
 
-        const points = data.points || Math.floor(Math.random() * 100 + 1);
-        msg.innerHTML = `🎉 ${username} 抢到 ${points} 点！`;
+        const points = data.amount;
+        msg.innerHTML = `🎉 你抢到了 ${points} 点！`;
         startRedPacketRain(60);
         showScoreFly(points);
 

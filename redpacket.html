@@ -119,7 +119,9 @@
       msg.innerText = "正在连接服务器...";
 
       try {
-        const res = await fetch(`${API_BASE}/grab?gid=${gid}&game=${game}&uid=${uid}`);
+await fetch(`${API_BASE}/grab?gid=${gid}&game=${game}&uid=${uid}`, {
+  method: "POST"
+});
         const data = await res.json();
 
         if (!data.ok) {

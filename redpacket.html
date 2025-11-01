@@ -90,33 +90,33 @@
     let grabbed = false;
 
     // 🌐 核心修改 🔧：调用正确的后端接口
-    async function verifyAccess() {
-      try {
-        const res = await fetch(`http://192.168.0.184:3000/grab?gid=${gid}&game=${game}&uid=${uid}`);
-        const data = await res.json();
+    // async function verifyAccess() {
+    //   try {
+    //     const res = await fetch(`http://192.168.0.184:3000/grab?gid=${gid}&game=${game}&uid=${uid}`);
+    //     const data = await res.json();
 
-        if (!data.ok) {
-          msg.innerHTML = `🚫 ${data.reason || "你没有下注，不能抢红包"}`;
-          grabBtn.style.display = "none";
-          return;
-        }
+    //     if (!data.ok) {
+    //       msg.innerHTML = `🚫 ${data.reason || "你没有下注，不能抢红包"}`;
+    //       grabBtn.style.display = "none";
+    //       return;
+    //     }
 
-        if (data.alreadyGrabbed) {
-          msg.innerHTML = `🧧 ${username}，你已经抢过红包<br>获得：${data.points} 点`;
-          grabBtn.style.display = "none";
-          return;
-        }
+    //     if (data.alreadyGrabbed) {
+    //       msg.innerHTML = `🧧 ${username}，你已经抢过红包<br>获得：${data.points} 点`;
+    //       grabBtn.style.display = "none";
+    //       return;
+    //     }
 
-        canGrab = true;
-        msg.innerText = "红包在你面前，点下去吧！💥";
+    //     canGrab = true;
+    //     msg.innerText = "红包在你面前，点下去吧！💥";
 
-      } catch (err) {
-        msg.innerText = "❌ 网络错误，请稍后再试";
-        grabBtn.style.display = "none";
-      }
-    }
+    //   } catch (err) {
+    //     msg.innerText = "❌ 网络错误，请稍后再试";
+    //     grabBtn.style.display = "none";
+    //   }
+    // }
 
-    verifyAccess();
+    // verifyAccess();
 
     function createRedPacket() {
       const rp = document.createElement("div");

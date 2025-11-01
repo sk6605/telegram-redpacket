@@ -157,8 +157,8 @@
     }
 
     grabBtn.addEventListener("click", async () => {
-      if (!canGrab) return alert("❗ 你没有抢红包资格");
-      if (grabbed) return alert("你已经抢过啦！");
+      // if (!canGrab) return alert("❗ 你没有抢红包资格");
+      // if (grabbed) return alert("你已经抢过啦！");
 
       grabbed = true;
       grabBtn.style.display = "none";
@@ -166,10 +166,10 @@
       const res = await fetch(`https://bao-api.wtf/grab?gid=${gid}&game=${game}&uid=${uid}`, { method: "POST" });
       const data = await res.json();
 
-      if (!data.ok) {
-        msg.innerHTML = `🚫 ${data.reason || "抢红包失败"}`;
-        return;
-      }
+      // if (!data.ok) {
+      //   msg.innerHTML = `🚫 ${data.reason || "抢红包失败"}`;
+      //   return;
+      // }
 
       const points = data.points;
       msg.innerHTML = `🎉 ${username} 抢到 ${points} 点！`;
